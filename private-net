@@ -1,0 +1,42 @@
+#/bin/bash
+
+export composeDir="$(cd "$(dirname "$0")" && pwd)"
+. ${composeDir}/.env
+
+function dc(){
+  docker-compose -f ${composeDir}/private-net.yml $1
+}
+
+function reset(){
+    rm -fr persistence
+    cp -r persistence.restore persistence
+}
+
+function addToKeystore(){
+  docker-compose -f ${composeDir}/addToKeystore.yml up --scale accounts=${1-1} 
+  envFile=${composeDir}/.env
+  for f in ${composeDir}/keystore/*; do
+    address=$(cat $f | jq -r '.address')
+    if [[ -z $(grep ${address} ${envFile} | grep UNLOCKED_ACCOUNTS) ]];then # unlock new accounts
+      echo "Unlocking Account: " ${address}
+      sed -i -e "/UNLOCKED_ACCOUNTS/s|$|${address},|" ${envFile}
+    fi
+  done
+}
+
+case $1 in
+    "start" | "up") dc up
+    ;;
+    "stop") dc stop
+    ;;
+    "down") dc down
+    ;;
+    "addkey") addToKeystore $2
+    ;;
+    "r" | "reset") reset
+    ;;
+    *) echo "
+      private-net (start|stop|down|reset|addKey)
+        "
+    ;;
+esac

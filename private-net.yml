@@ -1,0 +1,30 @@
+version: '2'
+
+# geth Private Network
+# Start with: docker-compose up -d
+
+services:
+  geth-private-node:
+    build: 
+      context: ${composeDir}
+    image: geth-private-net
+    ports:
+      - "8545:8545"
+    env_file: ${composeDir}/.env
+    volumes: # Volume in Persistent Folder, Password File and Keystore
+      - ${composeDir}/persistence/:/root/.ethereum
+      - ${composeDir}/keystore:/root/.ethereum/keystore
+      - ${composeDir}/password.txt:/password.txt:ro
+    command: >
+      --rpc
+      --mine 
+      --nodiscover
+      --verbosity 6
+      --minerthreads=1 
+      --rpcaddr 0.0.0.0
+      --rpccorsdomain "*"
+      --etherbase $ETHERBASE
+      --networkid $NETWORK_ID
+      --password /password.txt
+      --unlock $UNLOCKED_ACCOUNTS 
+      --rpcapi="eth,net,web3,personal"
