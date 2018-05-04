@@ -13,30 +13,45 @@ function reset(){
 }
 
 function addToKeystore(){
-  docker-compose -f ${composeDir}/addToKeystore.yml up --scale accounts=${1-1} 
+  # docker-compose -f ${composeDir}/addToKeystore.yml up --scale accounts=${1-1} 
   envFile=${composeDir}/.env
+  genesisFile=${composeDir}/files/genesis.json
+
   for f in ${composeDir}/keystore/*; do
     address=$(cat $f | jq -r '.address')
+
     if [[ -z $(grep ${address} ${envFile} | grep UNLOCKED_ACCOUNTS) ]];then # unlock new accounts
       echo "Unlocking Account: " ${address}
       sed -i -e "/UNLOCKED_ACCOUNTS/s|$|${address},|" ${envFile}
     fi
+
+    if [[ -z $(grep ${address} ${genesisFile}) ]];then # fund new accounts
+      echo "Funding Account: " ${address} 
+      sed -i -e "s/alloc\": {/&\"0x${address}\": {\"balance\": \"1000000000000000000000\"},/" ${genesisFile}
+    fi
+
   done
 }
 
 case $1 in
     "start" | "up") dc up
     ;;
+    "build") dc "up --build"
+    ;;
     "stop") dc stop
     ;;
     "down") dc down
     ;;
+    "reset") reset
+    ;;
     "addkey") addToKeystore $2
     ;;
-    "r" | "reset") reset
+    "init") 
+      addToKeystore 2
+      dc "up --build"
     ;;
     *) echo "
-      private-net (start|stop|down|reset|addKey)
+      private-net (start|stop|down|reset|build|addKey|init)
         "
     ;;
 esac
