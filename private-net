@@ -8,8 +8,8 @@ function dc(){
 }
 
 function reset(){
-    rm -fr persistence
-    cp -r persistence.restore persistence
+    rm -fr ${composeDir}/persistence
+    cp -r ${composeDir}/persistence.restore ${composeDir}/persistence
 }
 
 function addToKeystore(){
