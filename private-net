@@ -13,7 +13,7 @@ function reset(){
 }
 
 function addToKeystore(){
-  # docker-compose -f ${composeDir}/addToKeystore.yml up --scale accounts=${1-1} 
+  docker-compose -f ${composeDir}/addToKeystore.yml up --scale accounts=${1-1} 
   envFile=${composeDir}/.env
   genesisFile=${composeDir}/files/genesis.json
 
